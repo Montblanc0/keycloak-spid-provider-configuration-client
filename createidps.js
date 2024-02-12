@@ -1,5 +1,5 @@
-const {from, of, concat} = require('rxjs')
-const {map, mergeMap, take} = require('rxjs/operators')
+const {from, of, concat, EMPTY} = require('rxjs')
+const {map, mergeMap, isEmpty} = require('rxjs/operators')
 const {config, patchTemplate, enrichIdpWithConfigData} = require('./src/common')
 const {
     httpGrabIdPsMetadata,
@@ -12,10 +12,17 @@ const {
 
 const idPTemplate = JSON.parse(patchTemplate('./template/idpmodel.json'))
 
+var getOfficialSpididPsMetadata$;
 
-//recupero url metadati
-var getOfficialSpididPsMetadata$ = from(httpGrabIdPsMetadata())
-    .pipe(mergeMap(httpResponse => from(httpResponse.data.data.filter(idp => !config.singleIdp || idp.ipa_entity_code == config.singleIdp).map(idp => enrichIdpWithConfigData(idp)))));
+if(typeof(config.spidMetadataOfficialURL) !== 'undefined' && config.spidMetadataOfficialURL !== "") { 
+    //recupero url metadati
+    getOfficialSpididPsMetadata$ = from(httpGrabIdPsMetadata())
+        .pipe(mergeMap(httpResponse => from(httpResponse.data.data.filter(idp => !config.singleIdp || idp.ipa_entity_code == config.singleIdp).map(idp => enrichIdpWithConfigData(idp)))));
+    
+}
+else 
+    getOfficialSpididPsMetadata$ = EMPTY;
+
 
 if (config.createSpidTestIdP === 'true') {
     let spidTestIdPOfficialMetadata = {
@@ -25,9 +32,7 @@ if (config.createSpidTestIdP === 'true') {
         metadata_url: config.spidTestIdPMetadataURL,
         entity_type: 'IdP'
     }
-
-    getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestIdPOfficialMetadata)))
-
+    getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestIdPOfficialMetadata)));    
 }
 
 if (config.createSpidValidatorIdP === 'true') {
@@ -39,9 +44,7 @@ if (config.createSpidValidatorIdP === 'true') {
         displayName: config.spidValidatorIdPDisplayName,
         entity_type: 'IdP'
     }
-
     getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidValidatorIdPOfficialMetadata)))
-
 }
 
 if (config.createSpidDemoIdP === 'true') {
@@ -53,12 +56,21 @@ if (config.createSpidDemoIdP === 'true') {
         hideOnLoginPage: "false",
         entity_type: 'IdP'
     }
-
     getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidDemoIdPOfficialMetadata)))
-
 }
 
-//getOfficialSpididPsMetadata$.subscribe(console.log)
+
+var noIdpToSetUp; 
+getOfficialSpididPsMetadata$.pipe(isEmpty()).subscribe(r => {
+    noIdpToSetUp = r;
+});
+
+if(noIdpToSetUp){
+    console.error("No idp configured to be set up, exiting");
+    return;
+}
+
+//getOfficialSpididPsMetadata$.subscribe(console.log);
 
 //richiesta cancellazione degli idPs da keycloak
 var deleteKeycloakSpidIdPs$ = getOfficialSpididPsMetadata$
@@ -67,7 +79,10 @@ var deleteKeycloakSpidIdPs$ = getOfficialSpididPsMetadata$
 
 //richiesta conversione in import-config model [idP,import-config-response]
 var getKeycloakImportConfigModels$ = deleteKeycloakSpidIdPs$
-    .pipe(mergeMap(spidIdPOfficialMetadata => from(httpCallKeycloakImportConfig(spidIdPOfficialMetadata.metadata_url).then(httpResponse => [spidIdPOfficialMetadata, httpResponse.data]))))
+    .pipe(mergeMap(spidIdPOfficialMetadata => from(httpCallKeycloakImportConfig(spidIdPOfficialMetadata.metadata_url).
+    then(httpResponse => {
+        return [spidIdPOfficialMetadata, httpResponse.data]
+    }))))
 
 //trasformazione ed arricchimento => modello per creare l'idP su keycloak
 var enrichedModels$ = getKeycloakImportConfigModels$

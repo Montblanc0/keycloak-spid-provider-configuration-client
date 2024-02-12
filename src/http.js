@@ -29,7 +29,7 @@ const agent = new https.Agent({
 const tokenConfig = {
     httpsAgent : agent,
     method: 'post',
-    url: config.keycloakServerBaseURL + '/auth/realms/' + config.adminRealm + '/protocol/openid-connect/token',
+    url: config.keycloakServerBaseURL + '/realms/' + config.adminRealm + '/protocol/openid-connect/token',
     headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
     },
@@ -43,7 +43,7 @@ const tokenConfig = {
 
 exports.httpGrabIdPsMetadata = function () {
     return axios({
-        httpsAgent : agent,
+        httpsAgent: agent,
         method: 'get',
         url: config.spidMetadataOfficialURL,
         headers: {}
@@ -51,6 +51,7 @@ exports.httpGrabIdPsMetadata = function () {
         .catch(function (error) {
             handleHttpError(error);
         });
+
 }
 
 const httpGrabKeycloaktoken = function () {
@@ -70,7 +71,7 @@ exports.httpCallKeycloakImportConfig = function (idPsMetadataUrl) {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'post',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/' + config.realm + '/identity-provider/import-config',
+            url: config.keycloakServerBaseURL + '/admin/realms/' + config.realm + '/identity-provider/import-config',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -79,6 +80,7 @@ exports.httpCallKeycloakImportConfig = function (idPsMetadataUrl) {
         };
         return axios(axiosConfig)
             .catch(function (error) {
+                //console.error(error);
                 console.error('Error importing IdP configuration from metadata '+idPsMetadataUrl);
                 handleHttpError(error);
             });
@@ -93,7 +95,7 @@ exports.httpCallKeycloakCreateIdP = function (idPModel) {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'post',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/' + config.realm + '/identity-provider/instances',
+            url: config.keycloakServerBaseURL + '/admin/realms/' + config.realm + '/identity-provider/instances',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -114,7 +116,7 @@ exports.httpCallKeycloakDeleteIdP = function (idPAlias) {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'delete',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/' + config.realm + '/identity-provider/instances/' + idPAlias,
+            url: config.keycloakServerBaseURL + '/admin/realms/' + config.realm + '/identity-provider/instances/' + idPAlias,
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -122,8 +124,10 @@ exports.httpCallKeycloakDeleteIdP = function (idPAlias) {
         };
         return axios(axiosConfig)
             .catch(function (error) {
-                console.error('Error deleting IdP '+idPAlias);
-                handleHttpError(error);
+                if (error.response.status == 404)
+                    console.error('No IdP '+idPAlias+' found in keycloak to delete');
+                else
+                    handleHttpError('keycloak error: '+error);
             });
     })
 }
@@ -133,7 +137,7 @@ exports.httpCallKeycloakGetIpds = function () {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'get',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/' + config.realm + '/identity-provider/instances',
+            url: config.keycloakServerBaseURL + '/admin/realms/' + config.realm + '/identity-provider/instances',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -151,7 +155,7 @@ exports.httpCallKeycloakGetIpdDescription = function (idpAlias) {
     let axiosConfig = {
         httpsAgent : agent,
         method: 'get',
-        url: config.keycloakServerBaseURL + '/auth/realms/' + config.realm + '/broker/' + encodeURIComponent(idpAlias) + '/endpoint/descriptor',
+        url: config.keycloakServerBaseURL + '/realms/' + config.realm + '/broker/' + encodeURIComponent(idpAlias) + '/endpoint/descriptor',
     };
     return axios(axiosConfig)
         .catch(function (error) {
@@ -188,7 +192,7 @@ exports.httpCallKeycloakImportRealm = function () {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'post',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/',
+            url: config.keycloakServerBaseURL + '/admin/realms/',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -210,7 +214,7 @@ const httpCallKeycloakCreateMapper = function (idPAlias, mapperModel) {
         let axiosConfig = {
             httpsAgent : agent,
             method: 'post',
-            url: config.keycloakServerBaseURL + '/auth/admin/realms/' + config.realm + '/identity-provider/instances/' + idPAlias + '/mappers',
+            url: config.keycloakServerBaseURL + '/admin/realms/' + config.realm + '/identity-provider/instances/' + idPAlias + '/mappers',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -225,12 +229,16 @@ const httpCallKeycloakCreateMapper = function (idPAlias, mapperModel) {
 }
 
 const handleHttpError = function(error) {
-    if (undefined !== error.response.data.errorMessage) {
-        console.error(error.response.data.errorMessage);
-        return;
+    if (undefined !== error.response && undefined !== error.response.data) {
+        if (undefined !== error.response.data.errorMessage) {
+            console.error(error.response.data.errorMessage);
+            return;
+        }
+        if (undefined !== error.response.data.error) {
+            console.error(error.response.data.error);
+            return;
+        }
     }
-    if (undefined !== error.response.data.error) {
-        console.error(error.response.data.error);
-        return;
-    }
+    else
+        console.error(error);
 }
