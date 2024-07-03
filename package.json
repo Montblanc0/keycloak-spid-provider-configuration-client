@@ -4,7 +4,6 @@
   "description": "A client for configuring a keycloak spid provider patched installation",
   "main": "createidps.js",
   "scripts": {
-    "create-realm": "node ./createrealm.js > log/create-realm.log",
     "create-idps": "node ./createidps.js > log/create-idps.log",
     "create-spmetadata": "node ./createspmetadata.js > log/create-spmetadata.log",
     "test": "jest"
