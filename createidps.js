@@ -17,7 +17,7 @@ var getOfficialSpididPsMetadata$;
 if(typeof(config.spidMetadataOfficialURL) !== 'undefined' && config.spidMetadataOfficialURL !== "") { 
     //recupero url metadati
     getOfficialSpididPsMetadata$ = from(httpGrabIdPsMetadata())
-        .pipe(mergeMap(httpResponse => from(httpResponse.data.data.filter(idp => !config.singleIdp || idp.ipa_entity_code == config.singleIdp).map(idp => enrichIdpWithConfigData(idp)))));
+        .pipe(mergeMap(httpResponse => from(httpResponse.data.filter(idp => !config.singleIdp || idp.entity_id == config.singleIdp).map(idp => enrichIdpWithConfigData(idp)))));
     
 }
 else 
@@ -26,35 +26,30 @@ else
 
 if (config.createSpidTestIdP === 'true') {
     let spidTestIdPOfficialMetadata = {
-        ipa_entity_code: config.spidTestIdPAlias,
-        entity_id: config.spidTestIdPAlias,
-        entity_name: config.spidTestIdPAlias,
-        metadata_url: config.spidTestIdPMetadataURL,
-        entity_type: 'IdP'
+        code: config.spidTestIdPAlias,
+        organization_name: config.spidTestIdPAlias,
+        organization_display_name: config.spidTestIdPAlias,
+        registry_link: config.spidTestIdPMetadataURL
     }
     getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestIdPOfficialMetadata)));    
 }
 
 if (config.createSpidValidatorIdP === 'true') {
     let spidValidatorIdPOfficialMetadata = {
-        ipa_entity_code: config.spidValidatorIdPAlias,
-        entity_id: config.spidValidatorIdPAlias,
-        entity_name: config.spidValidatorIdPAlias,
-        metadata_url: config.spidValidatorIdPMetadataURL,
-        displayName: config.spidValidatorIdPDisplayName,
-        entity_type: 'IdP'
+        code: config.spidValidatorIdPAlias,
+        organization_name: config.spidValidatorIdPAlias,
+        organization_display_name: config.spidValidatorIdPDisplayName,
+        registry_link: config.spidValidatorIdPMetadataURL
     }
     getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidValidatorIdPOfficialMetadata)))
 }
 
 if (config.createSpidDemoIdP === 'true') {
     let spidDemoIdPOfficialMetadata = {
-        ipa_entity_code: config.spidDemoIdPAlias,
-        entity_id: config.spidDemoIdPAlias,
-        entity_name: config.spidDemoIdPAlias,
-        metadata_url: config.spidDemoIdPMetadataURL,
-        hideOnLoginPage: "false",
-        entity_type: 'IdP'
+        code: config.spidDemoIdPAlias,
+        organization_name: config.spidDemoIdPAlias,
+        organization_display_name: config.spidDemoIdPAlias,
+        registry_link: config.spidDemoIdPMetadataURL
     }
     getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidDemoIdPOfficialMetadata)))
 }
@@ -91,10 +86,11 @@ var enrichedModels$ = getKeycloakImportConfigModels$
         let configIdp = {...idPTemplate.config, ...importConfigModel, ...idPOfficialMetadata.config}
         let firstLevel = {
             alias: idPOfficialMetadata.alias,
-            displayName: idPOfficialMetadata.displayName,
+            displayName: idPOfficialMetadata.displayName
         }
         let merged = {...idPTemplate, ...firstLevel}
         merged.config = configIdp
+        merged.config.metadataDescriptorUrl=idPOfficialMetadata.metadata_url;
         return merged
     }))
 
@@ -106,7 +102,7 @@ var createSpidIdPsOnKeycloak$ = enrichedModels$
 var createKeycloackSpidIdPsMappers$ = createSpidIdPsOnKeycloak$.pipe(mergeMap(idPAliasWithHttpCreateResponse => {
     let [alias, createResponse] = idPAliasWithHttpCreateResponse
     return from(httpCallKeycloakCreateAllMappers(alias).then(response => {
-        return {alias, create_response: createResponse, mapper_response: response}
+        return {alias, create_response: createResponse.status, mapper_response: response}
     }))
 }))
 

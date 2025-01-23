@@ -35,8 +35,14 @@ exports.patchTemplate = function (templateFilePath) {
         .replace(/%KEYCLOAKSERVERBASEURL%/g, config.keycloakServerBaseURL)
 }
 
-exports.enrichIdpWithConfigData = function (idp) {
-    let cleanedupSpidName = idp.entity_name.replace(' ID', '').replace('SPIDItalia ', '').replace(' S.C.p.A.', '').replace(' S.p.A.', '');
+exports.enrichIdpWithConfigData = function (idpOriginal) {
+    let idp = {
+        ipa_entity_code: idpOriginal.code,
+        entity_name: idpOriginal.organization_name,
+        displayName: idpOriginal.organization_display_name,
+        metadata_url: idpOriginal.registry_link.replace('?output=json', '')
+    };
+    let cleanedupSpidName = idp.entity_name.replace('TI Trust Technologies', 'Tim').replace(/ ID|SPIDItalia | S\.C\.p\.A\.| S\.p\.A\.| srl| spa| italiane|PEC/ig, '');
     idp.alias = slugify(SPID_ALIAS_PREFIX + cleanedupSpidName).toLowerCase();
     if (idp.metadata_url != config.spidValidatorIdPMetadataURL) { // do not tamper official name as per AgID guidelines
         idp.displayName = SPID_PREFIX + cleanedupSpidName;
