@@ -26,7 +26,7 @@ If you want to have official AgID SPID Validator (https://validator.spid.gov.it)
 createSpidValidatorIdP = true 
 ``` 
 
-If you have a local [spid-saml-check](https://github.com/italia/spid-saml-check) instance, set the following `.env` file properties
+If you have a local [spid-saml-check](https://github.com/italia/spid-saml-check) instance, set the following `.env` file properties (make sure that Keycloak can reach the `spidTestIdPMetadataURL` and is trusting its PEM certificate)
 
 ```
 createSpidTestIdP = true 
@@ -48,14 +48,14 @@ npm run create-idps
 ```
 
 ## Authentication flow
-By default, the new IdPs are created with a SPID-specific Authentication Flow, as per https://github.com/italia/spid-keycloak-provider/wiki/Configuring-the-Authentication-Flow - this is named `First Broker Login (SPID)` (ref. [idpmodel.json#L11](https://github.com/nicolabeghin/keycloak-spid-provider-configuration-client/blob/master/template/idpmodel.json#L11)) and must be created before running the client.
+By default, the new IdPs are created with a SPID-specific Authentication Flow, as per https://github.com/italia/spid-keycloak-provider/wiki/Configuring-the-Authentication-Flow - which should be named `first broker login - SPID` (ref. [idpmodel.json#L11](https://github.com/Montblanc0/keycloak-spid-provider-configuration-client/blob/master/template/idpmodel.json#L11)) and must be created before running the client.
 
-<img width="1455" alt="image" src="https://user-images.githubusercontent.com/2743637/212534098-d6add32d-db1b-4c63-b203-f37f78fee8f9.png">
+<img width="1455" alt="image" src="https://i.ibb.co/NgYbZ2Dv/first-broker-login-SPID-config.png">
 
 ## SPID access button integrated in Keycloak theme
 https://github.com/nicolabeghin/keycloak-spid-provider-configuration-client/wiki/SPID-access-button-integrated-in-Keycloak-theme
 <img width="285" alt="image" src="https://user-images.githubusercontent.com/2743637/212535193-aae9e8ce-b4f1-4411-9811-def46419bacf.png">
 
 ## Credits
-* forked from https://github.com/GermanoGiudici/keycloak-spid-provider-configuration-client (kudos to @GermanoGiudici)
+* forked from https://github.com/nicolabeghin/keycloak-spid-provider-configuration-client (kudos to @nicolabeghin and @GermanoGiudici)
 * this project is released under the Apache License 2.0, same as the main Keycloak package.
