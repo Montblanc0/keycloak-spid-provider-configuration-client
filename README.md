@@ -34,6 +34,13 @@ spidTestIdPAlias = spid-saml-check
 spidTestIdPMetadataURL = https://localhost:8443/metadata.xml
 ```
 
+If you also want to import the demo validator idp from your local spid-saml-check instance, set the following `.env` file properties (make sure that Keycloak can reach the `spidTestDemoIdPMetadataURL` and is trusting its PEM certificate)
+
+```
+createSpidTestDemoIdP = true
+spidTestDemoIdpMetadataURL = https://localhost:8443/demo/metadata.xml
+```
+
 ## Running the tool
 ### Docker
 Easiest way by leveraging Docker:

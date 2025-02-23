@@ -31,7 +31,17 @@ if (config.createSpidTestIdP === 'true') {
         organization_display_name: config.spidTestIdPAlias,
         registry_link: config.spidTestIdPMetadataURL
     }
-    getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestIdPOfficialMetadata)));    
+    getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestIdPOfficialMetadata)));
+}
+
+if (config.createSpidTestDemoIdP === 'true') {
+    let spidTestLocalDemoMetadata = {
+        code: config.spidTestDemoIdPAlias,
+        organization_name: config.spidTestDemoIdPAlias,
+        organization_display_name: config.spidTestDemoIdPAlias,
+        registry_link: config.spidTestDemoIdpMetadataURL
+    }
+    getOfficialSpididPsMetadata$ = concat(getOfficialSpididPsMetadata$, of(enrichIdpWithConfigData(spidTestLocalDemoMetadata)));       
 }
 
 if (config.createSpidValidatorIdP === 'true') {
